@@ -11,45 +11,56 @@ load_dotenv()
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
+LOGISTICS_CHANNEL = "C09AVKTL8JF"
+
 
 app = App(
     token=SLACK_BOT_TOKEN,
     signing_secret=SLACK_SIGNING_SECRET,
 )
 
+def normalize(name: str):
+    name = name.lower()
+    name = name.replace(" ", "-")
+    name = name.replace("_", "-")
+    name = name.replace("--", "-")
+    return name.strip("-")
+
 def get_channel_from_caption(client, caption: str):
     if not caption:
         return None
     
-    # clean up caption: lowercase, remove hashtags, trim spaces
-    name = caption.strip().lower()
-    name = name.replace("#", "")
+    normalized_caption = normalize(caption)
 
-    # fetch channels
     response = client.conversations_list(limit=500)
 
-    # try exact match
     for ch in response["channels"]:
-        if ch["name"].lower() == name:
+        if normalize(ch["name"]) == normalized_caption:
             return ch["id"]
-
+        
+    print(normalized_caption)
+    
     return None
 
     
 
     
 def process_image_event(event, client: WebClient, logger):
+
+    if event.get("channel") != LOGISTICS_CHANNEL:
+        return
+    
     files = event.get("files", [])
     text = event.get("text", "")
 
     if not files:
         return
 
-    # Ignore bot messages
     if event.get("subtype") == "bot_message":
         return
 
     destination = get_channel_from_caption(client, text)
+    
     if not destination:
         logger.info(f"No destination channel for caption: {text}")
         return
