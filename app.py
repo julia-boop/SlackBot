@@ -35,7 +35,7 @@ def get_channel_from_caption(client, caption: str):
     response = client.conversations_list(limit=500)
 
     for ch in response["channels"]:
-        if normalized_caption in normalize(ch["name"]):
+        if normalize(ch["name"]) in normalized_caption:
             return ch["id"]
         
     print(normalized_caption)
