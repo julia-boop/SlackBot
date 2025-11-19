@@ -35,7 +35,7 @@ def get_channel_from_caption(client, caption: str):
     response = client.conversations_list(limit=500)
 
     for ch in response["channels"]:
-        if normalize(ch["name"]) == normalized_caption:
+        if normalized_caption in normalize(ch["name"]):
             return ch["id"]
         
     print(normalized_caption)
@@ -60,7 +60,7 @@ def process_image_event(event, client: WebClient, logger):
         return
 
     destination = get_channel_from_caption(client, text)
-    
+
     if not destination:
         logger.info(f"No destination channel for caption: {text}")
         return
