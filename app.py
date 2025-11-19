@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 from dotenv import load_dotenv
 from slack_bolt.adapter.socket_mode import SocketModeHandler 
@@ -18,6 +19,16 @@ app = App(
     token=SLACK_BOT_TOKEN,
     signing_secret=SLACK_SIGNING_SECRET,
 )
+
+def extract_channel_id(caption: str):
+    if not caption:
+        return None
+    
+    match = re.search(r"<#([A-Z0-9]+)\|", caption)
+    if match:
+        return match.group(1)
+    
+    return None
 
 def normalize(name: str):
     name = name.lower()
@@ -59,7 +70,7 @@ def process_image_event(event, client: WebClient, logger):
     if event.get("subtype") == "bot_message":
         return
 
-    destination = get_channel_from_caption(client, text)
+    destination = extract_channel_id(text)
 
     if not destination:
         logger.info(f"No destination channel for caption: {text}")
