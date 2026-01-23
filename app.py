@@ -6,19 +6,22 @@ from slack_bolt.adapter.socket_mode import SocketModeHandler
 from slack_bolt import App
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 
 load_dotenv()
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
-LOGISTICS_CHANNEL = "C09AVKTL8JF"
+LOGISTICS_CHANNEL = "C09AVKTL8JFß"
 
 
 app = App(
     token=SLACK_BOT_TOKEN,
     signing_secret=SLACK_SIGNING_SECRET,
 )
+app.logger.setLevel(logging.DEBUG)
 
 def extract_channel_id(caption: str):
     if not caption:
@@ -54,10 +57,7 @@ def get_channel_from_caption(client, caption: str):
     return None
 
     
-
-    
 def process_image_event(event, client: WebClient, logger):
-
     if event.get("channel") != LOGISTICS_CHANNEL:
         return
     
@@ -110,15 +110,18 @@ def process_image_event(event, client: WebClient, logger):
 
 
 @app.event({"type": "message", "subtype": "file_share"})
-def handle_file_share(event, client: WebClient, logger):
+def handle_file_share(event, client: WebClient, logger, ack):
+    ack()
     return process_image_event(event, client, logger)
 
 
 @app.event("message")
-def handle_message_events(event, client: WebClient, logger):
+def handle_message_events(event, client: WebClient, logger, ack):
+    ack()
+    logger.info(f"INCOMING EVENT subtype={event.get('subtype')} channel={event.get('channel')} text={event.get('text')} at {event.get('ts')}")
+    process_image_event(event, client, logger)
     if event.get("subtype") is None:  
         process_image_event(event, client, logger)
-
 
 
 if __name__ == "__main__":
