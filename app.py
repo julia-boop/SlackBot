@@ -26,12 +26,9 @@ app.logger.setLevel(logging.DEBUG)
 def extract_channel_id(caption: str):
     if not caption:
         return None
-    
-    match = re.search(r"<#([A-Z0-9]+)\|", caption)
-    if match:
-        return match.group(1)
-    
-    return None
+
+    match = re.search(r"<#([A-Z0-9]+)(?:\|[^>]+)?>", caption)
+    return match.group(1) if match else None
 
 def normalize(name: str):
     name = name.lower()
@@ -62,6 +59,7 @@ def process_image_event(event, client: WebClient, logger):
         return
     
     files = event.get("files", [])
+    logger.info(f"files_count={len(files)} subtype={event.get('subtype')} -------------------------")
     text = event.get("text", "")
 
     if not files:
